@@ -6,6 +6,7 @@ import com.example.areyoup.global.cookie.CookieUtils;
 import com.example.areyoup.global.jwt.JwtTokenProvider;
 import com.example.areyoup.global.jwt.TokenService;
 import com.example.areyoup.global.jwt.dto.JwtTokenDto;
+import com.example.areyoup.global.oAuth2.OAuth2SuccessHandler;
 import com.example.areyoup.member.domain.Member;
 import com.example.areyoup.member.profileimage.domain.ProfileImage;
 import com.example.areyoup.member.dto.MemberRequestDto;
@@ -83,12 +84,12 @@ public class MemberService {
                 //이미지 파일이 없는 경우 기본 이미지 가져와서 저장
                 ClassPathResource resource = new ClassPathResource(PROFILE);
                 byte[] file = StreamUtils.copyToByteArray(resource.getInputStream());
-                image.toUpdateDate(file);
+                image.toUpdateData(file);
                 profileImageRepository.save(image);
             } else {
                 //이미지 파일이 있는 경우 해당 이미지 bytes로 저장
                 MultipartFile file = memberJoinDto.getImage();
-                image.toUpdateDate(file.getBytes());
+                image.toUpdateData(file.getBytes());
                 profileImageRepository.save(image);
             }
         } catch (IOException e) {
@@ -135,5 +136,25 @@ public class MemberService {
     public MemberResponseDto.MemberInfoDto info (HttpServletRequest request){
         Member m = findMember(request);
         return MemberResponseDto.MemberInfoDto.toInfoDto(m);
+    }
+
+    public MemberResponseDto.MemberJoinDto oAuth2Join(MemberRequestDto.MemberOauth2JoinDto memberDto) throws IOException {
+        if (memberRepository.findByMemberId(memberDto.getEmail()).isPresent())
+            throw new MemberException(MemberErrorCode.MEMBER_DUPLICATED);
+        String picUrl = memberDto.getProfileImageUrl();
+        ProfileImage profileImage = OAuth2SuccessHandler.getProfileImage(picUrl);
+        profileImageRepository.save(profileImage);
+        Member member = Member.builder()
+                .memberId(memberDto.getEmail())
+                .memberPw(passwordEncoder.encode(OAuth2SuccessHandler.generateRandomString()))
+                .name(memberDto.getNickname())
+                .roles(Collections.singletonList("USER"))
+                .profileImg(profileImage)
+                //kakao 로그인은 url로 전달되기 때문에 해당 과정으로 처리
+                .loginType("IOS-kakao")
+                .build();
+        memberRepository.save(member);
+
+        return member.toDto(member);
     }
 }

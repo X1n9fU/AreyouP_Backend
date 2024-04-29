@@ -23,6 +23,16 @@ public class MemberRequestDto {
 
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MemberOauth2JoinDto{
+        private String email;
+        private String nickname;
+        private String profileImageUrl;
+    }
+
 
     @Getter @Setter
     @NoArgsConstructor @AllArgsConstructor

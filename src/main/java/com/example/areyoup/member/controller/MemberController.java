@@ -23,13 +23,21 @@ public class MemberController {
     /*
     회원가입
     - Image 존재 X -> 기본 이미지(로고) 세팅
-    - nickname 존재 -> name = nickname
-                X -> name = name
      */
     @PostMapping("/join")
     public ResponseEntity<MemberResponseDto.MemberJoinDto> join(@ModelAttribute MemberRequestDto.MemberJoinDto memberDto) throws IOException {
         return ResponseEntity.ok()
                 .body(memberService.join(memberDto));
+    }
+
+    /*
+    IOS 회원가입
+    - email, name, profileImageUrl
+     */
+    @PostMapping("/oauth2/join")
+    public ResponseEntity<MemberResponseDto.MemberJoinDto> oAuth2Join(@RequestBody MemberRequestDto.MemberOauth2JoinDto memberDto) throws IOException {
+        return ResponseEntity.ok()
+                .body(memberService.oAuth2Join(memberDto));
     }
 
     /*
@@ -62,5 +70,7 @@ public class MemberController {
         return ResponseEntity.ok()
                 .body(memberService.delete(id));
     }
+
+
 
 }
